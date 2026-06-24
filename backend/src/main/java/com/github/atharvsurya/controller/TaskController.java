@@ -42,7 +42,6 @@ public class TaskController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             task.setUser(user);
-            task.setDeadline()
 
             // Auto-assign PENDING status if the frontend doesn't provide one
             if (task.getStatus() == null || task.getStatus().isEmpty()) {

@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:       #0A0F1E;
+  --navy-2:     #0F172A;
+  --navy-3:     #1E293B;
+  --navy-4:     #2D3A50;
+  --indigo:     #4F46E5;
+  --indigo-lt:  #6366F1;
+  --cyan:       #06B6D4;
+  --cyan-lt:    #22D3EE;
+  --emerald:    #10B981;
+  --amber:      #F59E0B;
+  --rose:       #F43F5E;
+  --slate-400:  #94A3B8;
+  --slate-500:  #64748B;
+  --slate-200:  #E2E8F0;
+  --white:      #FFFFFF;
+  --card-bg:    rgba(15, 23, 42, 0.8);
+  --border:     rgba(99, 102, 241, 0.15);
+  --border-lt:  rgba(255,255,255,0.06);
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'Inter', sans-serif;
+
+  --sidebar-w: 260px;
+  --header-h:  64px;
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--navy);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--navy-4); border-radius: 999px; }
+
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* Utility */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* ─── Animations ─────────────────────────────────────────────────── */
+@keyframes fadeIn   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse    { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes glow     { 0%, 100% { box-shadow: 0 0 20px rgba(79,70,229,0.3); } 50% { box-shadow: 0 0 40px rgba(79,70,229,0.6); } }
+@keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(400%); } }
+@keyframes ringPulse {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  50%  { transform: scale(1.15); opacity: 0.4; }
+  100% { transform: scale(1);   opacity: 0.8; }
+}
+
+.animate-fade-in  { animation: fadeIn 0.4s var(--ease) both; }
+.animate-pulse     { animation: pulse 2s infinite; }
+.animate-spin      { animation: spin 1s linear infinite; }
