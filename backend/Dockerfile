@@ -5,11 +5,11 @@ FROM node:18-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 # Copy frontend dependency files
-COPY frontend/package*.json ./
+COPY backend/src/main/resources/static/frontend/package*.json ./
 RUN npm install
 
 # Copy frontend source code and build it (Vite outputs to the 'dist' folder)
-COPY frontend/ ./
+COPY backend/src/main/resources/static/frontend/ ./
 RUN npm run build
 
 # ==========================================
