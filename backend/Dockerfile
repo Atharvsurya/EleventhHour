@@ -4,12 +4,12 @@
 FROM node:18-alpine AS frontend-builder
 WORKDIR /app/frontend
 
-# Copies from the uppercase 'Backend' folder on GitHub
-COPY Backend/src/main/resources/static/frontend/package*.json ./
+# Copy frontend dependency files directly from the root-level src path
+COPY src/main/resources/static/frontend/package*.json ./
 RUN npm install
 
-# Copies from the uppercase 'Backend' folder on GitHub
-COPY Backend/src/main/resources/static/frontend/ ./
+# Copy the rest of the frontend source code
+COPY src/main/resources/static/frontend/ ./
 RUN npm run build
 
 # ==========================================
@@ -18,11 +18,11 @@ RUN npm run build
 FROM maven:3.8.5-openjdk-17 AS backend-builder
 WORKDIR /app/backend
 
-# Copies from the uppercase 'Backend' folder on GitHub
-COPY Backend/pom.xml ./
-COPY Backend/src ./src
+# Copy backend pom.xml and src directly from the repository root
+COPY pom.xml ./
+COPY src ./src
 
-# Copies the compiled React assets from Stage 1 into the builder
+# Copy the compiled production-ready React assets into the target static folder
 COPY --from=frontend-builder /app/frontend/dist ./src/main/resources/static
 
 # Build the final Java executable (.jar)
