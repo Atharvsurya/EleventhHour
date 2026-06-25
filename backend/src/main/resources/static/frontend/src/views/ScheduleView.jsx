@@ -11,9 +11,15 @@ export default function ScheduleView({ userId }) {
     setError("");
     try {
       const res = await proposePlan(userId);
+      // Ensure we are grabbing the 'data' array from your JSON wrapper
+      if (res.success === false) {
+        setError(res.message);
+        setBlocks([]);
+        return;
+      }
       setBlocks(res.data || []);
     } catch (e) {
-      setError(e.message);
+      setError(e.message || "Failed to connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -31,6 +37,13 @@ export default function ScheduleView({ userId }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper to format the ISO dates ("2026-06-23T09:00:00") into readable times ("09:00 AM")
+  const formatTime = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -51,9 +64,20 @@ export default function ScheduleView({ userId }) {
           <h3 style={{ marginBottom: 16 }}>Proposed Schedule</h3>
           <div style={styles.blockList}>
             {blocks.map((block, i) => (
-              <div key={i} style={styles.block}>
-                <div style={styles.time}>{block.time || "Time slot"}</div>
-                <div>{block.activity || "Task activity"}</div>
+              <div key={`${block.taskId}-${i}`} style={styles.block}>
+                <div style={styles.time}>
+                  {formatTime(block.startTime)} <br/>
+                  <span style={{color: "var(--slate-400)", fontSize: "0.8em"}}>to</span> <br/>
+                  {formatTime(block.endTime)}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, color: "#fff", marginBottom: 4 }}>
+                    {block.taskTitle}
+                  </div>
+                  <div style={{ fontSize: "0.9em", color: "var(--slate-400)", lineHeight: "1.4" }}>
+                    {block.actionPlan}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -67,9 +91,9 @@ export default function ScheduleView({ userId }) {
 }
 
 const styles = {
-  btn: { background: "var(--indigo)", color: "#fff", padding: "10px 20px", borderRadius: 8, fontWeight: 600, border: "none" },
+  btn: { background: "var(--indigo)", color: "#fff", padding: "10px 20px", borderRadius: 8, fontWeight: 600, border: "none", cursor: "pointer" },
   planContainer: { marginTop: 32, padding: 24, background: "rgba(255,255,255,0.03)", borderRadius: 16, border: "1px solid var(--border-lt)" },
   blockList: { display: "flex", flexDirection: "column", gap: 12 },
-  block: { display: "flex", gap: 16, background: "rgba(255,255,255,0.05)", padding: 16, borderRadius: 10, border: "1px solid var(--border-lt)" },
-  time: { fontWeight: 700, color: "var(--cyan)", minWidth: 100 }
+  block: { display: "flex", gap: 16, background: "rgba(255,255,255,0.05)", padding: 16, borderRadius: 10, border: "1px solid var(--border-lt)", alignItems: "flex-start" },
+  time: { fontWeight: 700, color: "var(--cyan)", minWidth: 90, textAlign: "center", paddingTop: 2 }
 };

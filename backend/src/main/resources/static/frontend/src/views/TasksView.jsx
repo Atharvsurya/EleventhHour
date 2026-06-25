@@ -44,7 +44,7 @@ export default function TasksView({ tasks, loading, error, onAdd, onEdit, onDele
 
       <div style={styles.grid}>
         {tasks.map((task, idx) => (
-          <TaskCard
+          task && <TaskCard
             key={task.id}
             task={task}
             onEdit={openEdit}

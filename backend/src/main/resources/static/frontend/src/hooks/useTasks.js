@@ -12,7 +12,9 @@ export function useTasks(userId) {
     setError(null);
     try {
       const res = await getTasks(userId);
-      setTasks(res.data || []);
+      // Filter out any null/undefined records returning from the database
+      const validTasks = (res.data || []).filter(t => t != null);
+      setTasks(validTasks);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -26,13 +28,18 @@ export function useTasks(userId) {
 
   const addTask = async (task) => {
     const res = await createTask(userId, task);
-    setTasks((prev) => [...prev, res.data]);
+    // Only append if the backend successfully sends back the new task object
+    if (res && res.data) {
+      setTasks((prev) => [...prev, res.data]);
+    }
     return res.data;
   };
 
   const editTask = async (taskId, task) => {
     const res = await updateTask(taskId, task);
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? res.data : t)));
+    if (res && res.data) {
+      setTasks((prev) => prev.map((t) => (t && t.id === taskId ? res.data : t)));
+    }
     return res.data;
   };
 

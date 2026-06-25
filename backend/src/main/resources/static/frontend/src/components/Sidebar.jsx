@@ -9,10 +9,13 @@ const NAV = [
 const STATUS_COLORS = { PENDING: "#F59E0B", IN_PROGRESS: "#06B6D4", COMPLETED: "#10B981" };
 
 export default function Sidebar({ active, onNav, userId, tasks }) {
-  const pending    = tasks.filter(t => t.status === "PENDING").length;
-  const inProgress = tasks.filter(t => t.status === "IN_PROGRESS").length;
-  const done       = tasks.filter(t => t.status === "COMPLETED").length;
-  const total      = tasks.length || 1;
+
+  const safeTasks = tasks || [];
+  const pending    = tasks.filter(t => t && t.status === "PENDING").length;
+  const inProgress = tasks.filter(t => t && t.status === "IN_PROGRESS").length;
+  const done       = tasks.filter(t => t && t.status === "COMPLETED").length;
+
+  const total = safeTasks.length || 1;
   const pct        = Math.round((done / total) * 100);
 
   return (

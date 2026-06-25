@@ -32,7 +32,7 @@ RUN mvn clean package -DskipTests
 # ==========================================
 # Stage 3: Production Run
 # ==========================================
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # Copy the finished .jar file from the backend-builder stage

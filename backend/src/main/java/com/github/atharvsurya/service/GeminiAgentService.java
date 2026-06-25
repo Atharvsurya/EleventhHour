@@ -15,9 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class GeminiAgentService {
@@ -25,7 +23,7 @@ public class GeminiAgentService {
     @Value("${GEMINI_API_KEY}")
     private String apiKey;
 
-    private final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
+    private final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=";
 
     private final TaskRepository taskRepository;
     private final RestTemplate restTemplate;
@@ -38,12 +36,12 @@ public class GeminiAgentService {
     }
 
     public ApiResponse<List<ScheduleBlockDto>> generateProactiveSchedule(User user) throws Exception {
-        Optional<Task> pendingTasksopt = taskRepository.findByUserIdAndStatus(user.getId(), "PENDING");
+        List<Task> pendingTasks = taskRepository.findByUserIdAndStatus(user.getId(), "PENDING");
 
-        if (pendingTasksopt.isEmpty()) {
+        if (pendingTasks.isEmpty()) {
             return ApiResponse.fail("No tasks found.");
         }
-        List<Task> pendingTasks = Collections.singletonList(pendingTasksopt.get());
+
         StringBuilder taskContext = new StringBuilder();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -63,16 +61,14 @@ public class GeminiAgentService {
                 "'actionPlan' (string detailing sub-tasks), and 'priorityRank' (int 1-5, 1 being highest critical priority). " +
                 "Here are the user's current tasks:\n";
 
-        // ... (Task Context and Prompt logic remains exactly the same) ...
         String completePrompt = basePrompt + taskContext.toString();
 
         // 1. Construct the JSON request payload
         com.fasterxml.jackson.databind.node.ObjectNode rootRequestNode = objectMapper.createObjectNode();
 
-        // --- THE FIX: Tell Gemini to natively output clean JSON ---
+        // Tell Gemini to natively output clean JSON
         com.fasterxml.jackson.databind.node.ObjectNode generationConfigNode = rootRequestNode.putObject("generationConfig");
         generationConfigNode.put("responseMimeType", "application/json");
-        // ---------------------------------------------------------
 
         com.fasterxml.jackson.databind.node.ArrayNode contentsArray = rootRequestNode.putArray("contents");
         com.fasterxml.jackson.databind.node.ObjectNode contentNode = contentsArray.addObject();
@@ -80,20 +76,27 @@ public class GeminiAgentService {
         com.fasterxml.jackson.databind.node.ObjectNode partNode = partsArray.addObject();
         partNode.put("text", completePrompt);
 
-        // 2. Execute the POST call
+        // 2. Execute the POST call with robust Error Handling
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(rootRequestNode.toString(), headers);
-        ResponseEntity<String> response = restTemplate.postForEntity(GEMINI_API_URL + apiKey, entity, String.class);
 
-        // 3. Parse the clean JSON directly (No string manipulation needed!)
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.postForEntity(GEMINI_API_URL + apiKey, entity, String.class);
+        } catch (org.springframework.web.client.HttpServerErrorException.ServiceUnavailable e) {
+            return ApiResponse.fail("The AI service is currently overloaded. Please try again in a few moments.");
+        } catch (org.springframework.web.client.HttpClientErrorException.TooManyRequests e) {
+            return ApiResponse.fail("You are generating schedules too quickly! Please wait about 10 seconds and try again.");
+        } catch (org.springframework.web.client.RestClientResponseException e) {
+            return ApiResponse.fail("Failed to connect to the AI service: " + e.getMessage());
+        }
+
+        // 3. Parse the clean JSON directly
         JsonNode root = objectMapper.readTree(response.getBody());
         String rawJsonText = root.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
 
-        // You can now delete all the `if (rawJsonText.contains("```json"))` code completely!
-
         JsonNode scheduleBlocksJson = objectMapper.readTree(rawJsonText.trim());
-        // ... (Rest of your array mapping logic remains the same) ...
         JsonNode arrayNode = scheduleBlocksJson.isArray() ? scheduleBlocksJson : scheduleBlocksJson.path("scheduleBlocks");
 
         List<ScheduleBlockDto> proposedDtos = new ArrayList<>();

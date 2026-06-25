@@ -6,7 +6,7 @@ import ScheduleView from "./views/ScheduleView";
 import DashboardView from "./views/DashboardView";
 import { useTasks } from "./hooks/useTasks";
 
-const USER_ID = "U-1001"; // Hardcoded for now, replace with real auth later
+const USER_ID = "1"; // Hardcoded for now, replace with real auth later
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("tasks");
@@ -58,7 +58,7 @@ const styles = {
   },
   mainContent: {
     flex: 1,
-    marginLeft: "var(--sidebar-w)", // Respects the CSS variable from index.css
+    marginLeft: "var(--sidebar-w)",
     display: "flex",
     flexDirection: "column",
   },
