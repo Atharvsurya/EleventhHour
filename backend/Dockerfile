@@ -4,12 +4,12 @@
 FROM node:18-alpine AS frontend-builder
 WORKDIR /app/frontend
 
-# Copy frontend dependency files
-COPY backend/src/main/resources/static/frontend/package*.json ./
+# Copies from the uppercase 'Backend' folder on GitHub
+COPY Backend/src/main/resources/static/frontend/package*.json ./
 RUN npm install
 
-# Copy frontend source code and build it (Vite outputs to the 'dist' folder)
-COPY backend/src/main/resources/static/frontend/ ./
+# Copies from the uppercase 'Backend' folder on GitHub
+COPY Backend/src/main/resources/static/frontend/ ./
 RUN npm run build
 
 # ==========================================
@@ -18,15 +18,14 @@ RUN npm run build
 FROM maven:3.8.5-openjdk-17 AS backend-builder
 WORKDIR /app/backend
 
-# Copy backend pom.xml and source code
-COPY backend/pom.xml ./
-COPY backend/src ./src
+# Copies from the uppercase 'Backend' folder on GitHub
+COPY Backend/pom.xml ./
+COPY Backend/src ./src
 
-# THE MAGIC TRICK: Copy the compiled React files from Stage 1
-# directly into the Spring Boot static resources folder before compiling Java
+# Copies the compiled React assets from Stage 1 into the builder
 COPY --from=frontend-builder /app/frontend/dist ./src/main/resources/static
 
-# Build the final Java .jar file
+# Build the final Java executable (.jar)
 RUN mvn clean package -DskipTests
 
 # ==========================================
@@ -35,12 +34,11 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
-# Copy the finished .jar file from the backend-builder stage
-# (Maven usually outputs the jar to the 'target' folder)
+# Copy the finished .jar file from Stage 2
 COPY --from=backend-builder /app/backend/target/*.jar app.jar
 
-# Document the port your Spring Boot app is listening on
+# Document the container port
 EXPOSE 8080
 
-# Start the application!
+# Start the unified application
 CMD ["java", "-jar", "app.jar"]
