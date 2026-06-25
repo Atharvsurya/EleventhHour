@@ -19,8 +19,8 @@ FROM maven:3.8.5-openjdk-17 AS backend-builder
 WORKDIR /app/backend
 
 # Copy backend pom.xml and source code
-COPY Backend/pom.xml ./
-COPY Backend/src ./src
+COPY backend/pom.xml ./
+COPY backend/src ./src
 
 # THE MAGIC TRICK: Copy the compiled React files from Stage 1
 # directly into the Spring Boot static resources folder before compiling Java
