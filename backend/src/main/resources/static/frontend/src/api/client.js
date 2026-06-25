@@ -58,8 +58,7 @@ export const registerUser = (userData) =>
 
 // ─── Task Endpoints ───────────────────────────────────────────────────────────
 
-export const getTasks = (userId) =>
-  request(`/tasks?userId=${userId}`);
+export const getTasks = () => request(`/tasks`);
 
 export const createTask = (userId, task) =>
   request(`/tasks?userId=${userId}`, {
@@ -80,14 +79,8 @@ export const deleteTask = (taskId) =>
 
 // ─── Agent Endpoints ──────────────────────────────────────────────────────────
 
-export const proposePlan = (userId) =>
-  request(`/agent/propose-plan?userId=${userId}`, {
-    method: "POST"
-  });
-
-// THE MISSING FUNCTION IS BACK!
-export const confirmPlan = (userId, blocks) =>
-  request(`/agent/confirm-plan?userId=${userId}`, {
+export const proposePlan = () => request(`/agent/propose-plan`, { method: "POST" });
+export const confirmPlan = (blocks) => request(`/agent/confirm-plan`, {
     method: "POST",
-    body: JSON.stringify(blocks),
-  });
+    body: JSON.stringify(blocks)
+});

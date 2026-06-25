@@ -12,13 +12,12 @@ import com.github.atharvsurya.service.GeminiAgentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/agent")
-@CrossOrigin(origins = "*")
 public class AgentController {
 
     private final GeminiAgentService agentService;
@@ -36,30 +35,44 @@ public class AgentController {
         this.scheduleBlockRepository = scheduleBlockRepository;
     }
 
+    private Long getUserIdFromToken(Principal principal) {
+        return userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
+    }
+
+    // 1. Propose Plan: Securely fetched for the current user
     @PostMapping("/propose-plan")
-    public ResponseEntity<ApiResponse<?>> proposePlan(@RequestParam Long userId) throws Exception {
-        Optional<User> optUser = userRepository.findById(userId);
-        if(optUser.isEmpty())
-            return ResponseEntity.ok(ApiResponse.fail("User not found."));
-        User user = optUser.get();
+    public ResponseEntity<ApiResponse<?>> proposePlan(Principal principal) throws Exception {
+        Long userId = getUserIdFromToken(principal);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         ApiResponse<List<ScheduleBlockDto>> res = agentService.generateProactiveSchedule(user);
+
         return res.isSuccess()
                 ? ResponseEntity.ok(res)
                 : ResponseEntity.status(404).body(res);
     }
 
+    // 2. Confirm Plan: Securely saved for the current user
     @PostMapping("/confirm-plan")
-    public ResponseEntity<ApiResponse<String>> confirmPlan(@RequestParam Long userId, @RequestBody List<ScheduleBlockDto> confirmedDtos) {
+    public ResponseEntity<ApiResponse<String>> confirmPlan(@RequestBody List<ScheduleBlockDto> confirmedDtos, Principal principal) {
         try {
+            Long userId = getUserIdFromToken(principal);
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             List<ScheduleBlock> blocksToSave = new ArrayList<>();
 
-            for (int i = 0; i < confirmedDtos.size(); i++) {
-                ScheduleBlockDto dto = confirmedDtos.get(i);
+            for (ScheduleBlockDto dto : confirmedDtos) {
+                // SECURITY CHECK: Verify the task being scheduled belongs to this user
                 Task task = taskRepository.findById(dto.getTaskId())
                         .orElseThrow(() -> new RuntimeException("Task not found: " + dto.getTaskId()));
+
+                if (!task.getUser().getId().equals(userId)) {
+                    throw new RuntimeException("Unauthorized: Task does not belong to you.");
+                }
 
                 ScheduleBlock block = new ScheduleBlock();
                 block.setUser(user);
@@ -73,12 +86,9 @@ public class AgentController {
             }
 
             scheduleBlockRepository.saveAll(blocksToSave);
-
-            // Return success response
             return ResponseEntity.ok(new ApiResponse<>(true, "Successfully locked " + blocksToSave.size() + " blocks.", null));
 
         } catch (Exception e) {
-            // Return error response
             return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Error: " + e.getMessage(), null));
         }
     }
