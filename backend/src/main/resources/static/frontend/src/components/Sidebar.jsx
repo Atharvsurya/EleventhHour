@@ -8,7 +8,7 @@ const NAV = [
 
 const STATUS_COLORS = { PENDING: "#F59E0B", IN_PROGRESS: "#06B6D4", COMPLETED: "#10B981" };
 
-export default function Sidebar({ active, onNav, userId, tasks }) {
+export default function Sidebar({ active, onNav, userId, tasks, username, onLogout}) {
 
   const safeTasks = tasks || [];
   const pending    = tasks.filter(t => t && t.status === "PENDING").length;
@@ -35,15 +35,21 @@ export default function Sidebar({ active, onNav, userId, tasks }) {
         </div>
       </div>
 
-      {/* User badge */}
-      <div style={styles.userBadge}>
-        <div style={styles.avatar}>{userId}</div>
-        <div>
-          <div style={styles.userName}>User #{userId}</div>
-          <div style={styles.userRole}>Active session</div>
+      {/* NEW User Session Section */}
+        <div style={styles.userBadge}>
+          <div style={styles.avatar}>
+            {username ? username.charAt(0).toUpperCase() : "U"}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={styles.userName}>{username || "Guest"}</div>
+            <div style={styles.userRole}>Active session</div>
+            {/* Logout Button */}
+            <button onClick={onLogout} style={styles.logoutBtn}>
+              Logout
+            </button>
+          </div>
+          <div style={styles.onlineDot} />
         </div>
-        <div style={styles.onlineDot} />
-      </div>
 
       {/* Nav */}
       <nav style={styles.nav}>
@@ -117,6 +123,29 @@ const styles = {
     gap: 10,
     padding: "20px 20px 16px",
     borderBottom: "1px solid var(--border-lt)",
+  },
+logoutBtn: {
+    background: "transparent",
+    border: "1px solid var(--slate-500)",
+    color: "var(--slate-400)",
+    padding: "2px 6px",
+    borderRadius: "4px",
+    fontSize: "9px",
+    cursor: "pointer",
+    marginTop: "4px",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em"
+  },
+  avatar: {
+    width: 32, height: 32,
+    background: "linear-gradient(135deg, var(--indigo), var(--cyan))",
+    borderRadius: 8,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "var(--font-display)",
+    fontWeight: 700,
+    fontSize: 14,
+    flexShrink: 0,
+    color: "#fff"
   },
   logoIcon: {
     width: 38, height: 38,

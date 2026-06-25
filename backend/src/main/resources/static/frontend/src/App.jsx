@@ -12,8 +12,6 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
 
-  // We are temporarily keeping this until we update the backend controllers
-  // to pull the ID directly from the secure token!
   const USER_ID = "1";
 
   // 1. Check for token on initial load
@@ -85,6 +83,7 @@ export default function App() {
         onNav={setActiveTab}
         userId={USER_ID}
         tasks={tasks}
+        username={username}
         onLogout={handleLogout}
       />
 
