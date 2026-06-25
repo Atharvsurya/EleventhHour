@@ -2,16 +2,13 @@
 const BASE_URL = "/api";
 
 async function request(path, options = {}) {
-  // 1. Grab the token from local storage
   const token = localStorage.getItem("jwt_token");
 
-  // 2. Set up default headers
   const headers = {
     "Content-Type": "application/json",
     ...options.headers
   };
 
-  // 3. If the user is logged in, attach the token to the header!
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -21,52 +18,74 @@ async function request(path, options = {}) {
     headers,
   });
 
-  // 4. NEW: Handle 401 Unauthorized (Token expired or invalid)
+  // Handle 401 Unauthorized
   if (res.status === 401) {
     localStorage.removeItem("jwt_token");
-    window.location.href = "/login"; // Force redirect to login page
+    window.location.href = "/login";
     throw new Error("Session expired. Please log in again.");
   }
 
-  const json = await res.json();
-  if (!json.success && json.success !== undefined) {
-    throw new Error(json.message || "Request failed");
+  // Safe JSON Parsing to prevent "Unexpected end of JSON input"
+  let json;
+  try {
+    const text = await res.text();
+    json = text ? JSON.parse(text) : {};
+  } catch (err) {
+    throw new Error(`Server returned an invalid response (HTTP ${res.status}).`);
   }
+
+  // Catch Spring Security rejections and custom API failures
+  if (!res.ok || (json.success !== undefined && !json.success)) {
+    throw new Error(json.message || `Request failed with status ${res.status}`);
+  }
+
   return json;
 }
 
+// ─── Auth Endpoints ───────────────────────────────────────────────────────────
+
+export const loginUser = (credentials) =>
+  request(`/auth/login`, {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+
+export const registerUser = (userData) =>
+  request(`/auth/register`, {
+    method: "POST",
+    body: JSON.stringify(userData),
+  });
+
 // ─── Task Endpoints ───────────────────────────────────────────────────────────
 
-/** GET /api/tasks?userId={id}  →  { success, message, data: Task[] } */
 export const getTasks = (userId) =>
   request(`/tasks?userId=${userId}`);
 
-/** POST /api/tasks?userId={id}  →  { success, message, data: Task } */
 export const createTask = (userId, task) =>
   request(`/tasks?userId=${userId}`, {
     method: "POST",
     body: JSON.stringify(task),
   });
 
-/** PUT /api/tasks/{taskId}  →  { success, message, data: Task } */
 export const updateTask = (taskId, task) =>
   request(`/tasks/${taskId}`, {
     method: "PUT",
     body: JSON.stringify(task),
   });
 
-/** DELETE /api/tasks/{taskId}  →  { success, message, data: null } */
 export const deleteTask = (taskId) =>
-  request(`/tasks/${taskId}`, { method: "DELETE" });
+  request(`/tasks/${taskId}`, {
+    method: "DELETE"
+  });
 
 // ─── Agent Endpoints ──────────────────────────────────────────────────────────
 
-/** POST /api/agent/propose-plan?userId={id}  →  { success, message, data: ScheduleBlockDto[] } */
 export const proposePlan = (userId) =>
-  request(`/agent/propose-plan?userId=${userId}`, { method: "POST" });
+  request(`/agent/propose-plan?userId=${userId}`, {
+    method: "POST"
+  });
 
-/** POST /api/agent/confirm-plan?userId={id}  body: ScheduleBlockDto[]
- * →  { success, message, data: null } */
+// THE MISSING FUNCTION IS BACK!
 export const confirmPlan = (userId, blocks) =>
   request(`/agent/confirm-plan?userId=${userId}`, {
     method: "POST",
