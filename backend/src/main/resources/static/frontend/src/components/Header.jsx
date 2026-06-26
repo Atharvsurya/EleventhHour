@@ -1,5 +1,20 @@
+import React, { useState, useEffect } from "react";
+
 export default function Header({ title, subtitle, actions }) {
-  const now = new Date();
+  // 1. Store the current time in state
+  const [now, setNow] = useState(new Date());
+
+  // 2. Set up the ticking timer
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      setNow(new Date()); // Update the time every second
+    }, 1000);
+
+    // 3. Cleanup the timer if the Header is removed from the screen
+    return () => clearInterval(timerId);
+  }, []);
+
+  // Format the time strings based on the live 'now' state
   const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 

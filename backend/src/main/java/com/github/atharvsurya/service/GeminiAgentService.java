@@ -14,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,8 +54,15 @@ public class GeminiAgentService {
                     i, task.getId(), task.getTitle(), task.getDeadline().format(formatter), task.getPriority()));
         }
 
-        // Construct the system instructions and task context for the Gemini Agent
+        // --- NEW TEMPORAL AWARENESS LOGIC ---
+        // Grab the exact current time in IST
+        ZonedDateTime nowInIST = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+        String currentTimeString = nowInIST.format(formatter);
+
+        // Construct the system instructions and inject the current time constraint
         String basePrompt = "You are 'The Last-Minute Life Saver' AI productivity companion. " +
+                "CRITICAL INSTRUCTION: The current date and time is EXACTLY " + currentTimeString + ". " +
+                "You MUST NOT schedule any tasks in the past. Start the very first schedule block at or slightly after this exact current time. " +
                 "Analyze the following pending tasks and generate an optimal, proactive execution schedule. " +
                 "Do not just remind the user; break tasks down into actionable schedule blocks with start and end times. " +
                 "Return the response STRICTLY as a JSON array named 'scheduleBlocks' where each element contains: " +
