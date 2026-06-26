@@ -84,3 +84,5 @@ export const confirmPlan = (blocks) => request(`/agent/confirm-plan`, {
     method: "POST",
     body: JSON.stringify(blocks)
 });
+
+export const getActivePlans = () => request(`/agent/active-plans`, { method: "GET" });

@@ -98,4 +98,14 @@ public class AgentController {
             return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Error: " + e.getMessage(), null));
         }
     }
+
+    @GetMapping("/active-plans")
+    public ResponseEntity<ApiResponse<?>> getActivePlans(Principal principal) {
+        Long userId = getUserIdFromToken(principal);
+
+        // Fetch all locked blocks for the current user
+        List<ScheduleBlock> activeBlocks = scheduleBlockRepository.findByUserId(userId);
+
+        return ResponseEntity.ok(ApiResponse.ok("Active plans fetched.", activeBlocks));
+    }
 }

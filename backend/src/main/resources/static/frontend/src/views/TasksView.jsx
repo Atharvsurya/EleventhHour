@@ -2,72 +2,38 @@ import React, { useState } from "react";
 import TaskCard from "../components/TaskCard";
 import TaskModal from "../components/TaskModal";
 
-export default function TasksView({ tasks, loading, error, onAdd, onEdit, onDelete }) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
+export default function TasksView() {
+  const [tasks, setTasks] = useState([]);
+  const [scheduledBlocks, setScheduledBlocks] = useState([]); // New state
 
-  const handleSave = async (taskData, id) => {
-    if (id) {
-      await onEdit(id, taskData);
-    } else {
-      await onAdd(taskData);
-    }
-    setModalOpen(false);
-  };
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const openNew = () => {
-    setEditingTask(null);
-    setModalOpen(true);
-  };
-
-  const openEdit = (task) => {
-    setEditingTask(task);
-    setModalOpen(true);
-  };
-
-  const handleStatusChange = (id, newStatus) => {
-    const taskToUpdate = tasks.find((t) => t.id === id);
-    if (taskToUpdate) {
-      onEdit(id, { ...taskToUpdate, status: newStatus });
-    }
+  const fetchData = async () => {
+    const tasksRes = await getTasks();
+    const blocksRes = await getActivePlans(); // Fetch the new AI data
+    setTasks(tasksRes.data);
+    setScheduledBlocks(blocksRes.data);
   };
 
   return (
     <div>
-      <div style={styles.headerRow}>
-        <h2>Your Tasks</h2>
-        <button onClick={openNew} style={styles.addBtn}>+ New Task</button>
-      </div>
+      {/* Existing "Your Tasks" list */}
 
-      {loading && <p style={{ color: "var(--slate-400)" }}>Loading tasks...</p>}
-      {error && <p style={{ color: "var(--rose)", padding: 12, background: "rgba(244,63,94,0.1)", borderRadius: 8 }}>Error: {error}</p>}
-
+      {/* NEW: AI Scheduled Tasks Section */}
+      <h2 style={{ marginTop: 40 }}>AI Scheduled Blocks</h2>
       <div style={styles.grid}>
-        {tasks.map((task, idx) => (
-          task && <TaskCard
-            key={task.id}
-            task={task}
-            onEdit={openEdit}
-            onDelete={onDelete}
-            onStatusChange={handleStatusChange}
-            delay={idx * 50}
-          />
+        {scheduledBlocks.map(block => (
+          <div key={block.id} style={styles.card}>
+            <div style={{ color: "var(--cyan)", fontSize: 12 }}>
+              {new Date(block.startTime).toLocaleTimeString()} - {new Date(block.endTime).toLocaleTimeString()}
+            </div>
+            <h3>{block.task.title}</h3>
+            <p>{block.actionPlan}</p>
+          </div>
         ))}
       </div>
-
-      {!loading && tasks.length === 0 && (
-        <div style={styles.emptyState}>
-          <p>No tasks yet. Create one to get started!</p>
-        </div>
-      )}
-
-      {modalOpen && (
-        <TaskModal
-          task={editingTask}
-          onClose={() => setModalOpen(false)}
-          onSave={handleSave}
-        />
-      )}
     </div>
   );
 }
