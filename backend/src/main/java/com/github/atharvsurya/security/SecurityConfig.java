@@ -40,7 +40,7 @@ public class SecurityConfig {
                         // Explicitly allow ALL preflight OPTIONS requests without a token
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/error").permitAll()
                         .requestMatchers(
                                 "/",
                                 "/index.html",
