@@ -72,14 +72,14 @@ public class SecurityConfig {
                 "https://eleventhhour.onrender.com"
         ));
 
-        // Allow ALL headers to prevent any strict header blocking
-        config.setAllowedHeaders(Arrays.asList("*"));
+        // THE FIX: Explicitly list the exact headers instead of using the "*" wildcard
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         source.registerCorsConfiguration("/**", config);
 
         FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(source));
-        // THIS IS THE MAGIC LINE: It forces this filter to run before EVERYTHING else.
         bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return bean;
     }
