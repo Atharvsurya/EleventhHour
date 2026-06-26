@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { proposePlan, confirmPlan } from "../api/client";
 
-export default function ScheduleView({ userId }) {
+export default function ScheduleView() { // Removed userId prop!
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -10,8 +10,7 @@ export default function ScheduleView({ userId }) {
     setLoading(true);
     setError("");
     try {
-      const res = await proposePlan(userId);
-      // Ensure we are grabbing the 'data' array from your JSON wrapper
+      const res = await proposePlan(); // Removed userId!
       if (res.success === false) {
         setError(res.message);
         setBlocks([]);
@@ -26,20 +25,19 @@ export default function ScheduleView({ userId }) {
   };
 
   const savePlan = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      await confirmPlan(userId, blocks);
-      alert("Plan confirmed successfully!");
-      setBlocks([]); // Clear after save
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+      setLoading(true);
+      try {
+          // If 'blocks' is a string, parse it; otherwise, pass it directly
+          const payload = typeof blocks === 'string' ? JSON.parse(blocks) : blocks;
+          await confirmPlan(payload);
+          alert("Plan confirmed!");
+      } catch (e) {
+          setError(e.message);
+      } finally {
+          setLoading(false);
+      }
   };
 
-  // Helper to format the ISO dates ("2026-06-23T09:00:00") into readable times ("09:00 AM")
   const formatTime = (isoString) => {
     if (!isoString) return "";
     const date = new Date(isoString);

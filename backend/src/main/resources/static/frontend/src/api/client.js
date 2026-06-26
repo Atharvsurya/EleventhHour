@@ -1,5 +1,5 @@
 // ─── API Base Configuration ───────────────────────────────────────────────────
-const BASE_URL = "/api";
+const BASE_URL = "https://eleventhhour.onrender.com/api";
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("jwt_token");

@@ -179,16 +179,6 @@ logoutBtn: {
     border: "1px solid var(--border)",
     position: "relative",
   },
-  avatar: {
-    width: 32, height: 32,
-    background: "linear-gradient(135deg, var(--indigo), var(--cyan))",
-    borderRadius: 8,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontFamily: "var(--font-display)",
-    fontWeight: 700,
-    fontSize: 13,
-    flexShrink: 0,
-  },
   userName: { fontWeight: 600, fontSize: 13, color: "var(--white)" },
   userRole: { fontSize: 10, color: "var(--slate-400)" },
   onlineDot: {
