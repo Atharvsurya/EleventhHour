@@ -1,7 +1,10 @@
 package com.github.atharvsurya.security;
 
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,9 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.http.HttpMethod;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 
@@ -32,10 +34,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // The old .cors() line is removed entirely. Our master filter handles it now!
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // NEW: Explicitly allow ALL preflight OPTIONS requests without a token!
+                        // Explicitly allow ALL preflight OPTIONS requests without a token
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         .requestMatchers("/api/auth/**").permitAll()
@@ -57,30 +59,29 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 2. Define the exact CORS rules
+    // 2. The Master CORS Filter (Highest Precedence)
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+    public FilterRegistrationBean<CorsFilter> customCorsFilter() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
 
-        // Add your Render URL and your local development URLs
-        configuration.setAllowedOrigins(Arrays.asList(
+        config.setAllowCredentials(true);
+        config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "https://eleventhhour.onrender.com"
         ));
 
-        // Allow the standard HTTP methods and the OPTIONS preflight method
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Allow ALL headers to prevent any strict header blocking
+        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
-        // Specifically allow the Authorization header so your JWT can pass through
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        source.registerCorsConfiguration("/**", config);
 
-        // Required if you are sending credentials/tokens
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Apply this rule to ALL endpoints
-        return source;
+        FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(source));
+        // THIS IS THE MAGIC LINE: It forces this filter to run before EVERYTHING else.
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return bean;
     }
 
     @Bean
