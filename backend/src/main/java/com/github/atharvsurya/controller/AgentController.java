@@ -56,6 +56,7 @@ public class AgentController {
     }
 
     // 2. Confirm Plan: Securely saved for the current user
+    // 2. Confirm Plan: Securely saved for the current user
     @PostMapping("/confirm-plan")
     public ResponseEntity<ApiResponse<String>> confirmPlan(@RequestBody List<ScheduleBlockDto> confirmedDtos, Principal principal) {
         try {
@@ -66,7 +67,7 @@ public class AgentController {
             List<ScheduleBlock> blocksToSave = new ArrayList<>();
 
             for (ScheduleBlockDto dto : confirmedDtos) {
-                // SECURITY CHECK: Verify the task being scheduled belongs to this user
+                // 1. Fetch and Verify Ownership
                 Task task = taskRepository.findById(dto.getTaskId())
                         .orElseThrow(() -> new RuntimeException("Task not found: " + dto.getTaskId()));
 
@@ -74,6 +75,11 @@ public class AgentController {
                     throw new RuntimeException("Unauthorized: Task does not belong to you.");
                 }
 
+                // 2. IMPORTANT: Update the Task status to "IN_PROGRESS" or "COMPLETED"
+                task.setStatus("IN_PROGRESS");
+                taskRepository.save(task); // <--- This saves the status update to the DB
+
+                // 3. Create the ScheduleBlock
                 ScheduleBlock block = new ScheduleBlock();
                 block.setUser(user);
                 block.setTask(task);
@@ -86,7 +92,7 @@ public class AgentController {
             }
 
             scheduleBlockRepository.saveAll(blocksToSave);
-            return ResponseEntity.ok(new ApiResponse<>(true, "Successfully locked " + blocksToSave.size() + " blocks.", null));
+            return ResponseEntity.ok(new ApiResponse<>(true, "Successfully locked " + blocksToSave.size() + " blocks and updated tasks.", null));
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Error: " + e.getMessage(), null));
